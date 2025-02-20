@@ -55,7 +55,7 @@ if name:
 
     # File Upload Feature
     st.subheader("📁 File Upload Center")
-    uploaded_file = st.file_uploader("Upload your project files", type=['py', 'txt', 'jpg', 'png'])
+    uploaded_file = st.file_uploader("Upload your project files", type=['py', 'txt', 'jpg', 'png' ,'pdf' ,'csv' ,'xlsx' , 'excel'])
     if uploaded_file:
         if uploaded_file.type.startswith('image'):
             st.image(Image.open(uploaded_file), caption='Uploaded Image', use_column_width=True)
