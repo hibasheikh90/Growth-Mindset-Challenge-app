@@ -1,142 +1,115 @@
 
 
 import streamlit as st
+import random
 import pandas as pd
-from datetime import datetime
+import plotly.express as px
+from streamlit_lottie import st_lottie
+import requests
+import time
+import numpy as np
+from PIL import Image
 
-# Page Configuration
-st.set_page_config(page_title="Growth Mindset Challenge", page_icon="🚀", layout="wide")
+# Function to load Lottie animations
+def load_lottieurl(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
 
-# Custom Styles
-st.markdown(
-    """
-    <style>
-    body {
-        font-family: Arial, sans-serif;
-    }
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        font-size: 16px;
-        padding: 10px 24px;
-        border-radius: 8px;
-        border: none;
-    }
-    .stTextInput>div>div>input {
-        font-size: 16px;
-        padding: 10px;
-        border-radius: 6px;
-    }
-    .stTable {
-        font-size: 16px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Load animations
+lottie_coding = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_w98qte06.json")
+lottie_hello = load_lottieurl("https://assets3.lottiefiles.com/packages/lf20_3rwasyjy.json")
 
-# Initialize Session State
-if "streak" not in st.session_state:
-    st.session_state["streak"] = 0
-if "leaderboard" not in st.session_state:
-    st.session_state["leaderboard"] = {}
-if "progress" not in st.session_state:
-    st.session_state["progress"] = []
-if "messages" not in st.session_state:
-    st.session_state["messages"] = []
+# Initialize session state
+if "users" not in st.session_state:
+    st.session_state.users = {}
 
-# Title & Introduction
-st.title("🚀 Growth Mindset Challenge")
-st.write("""
-### Welcome to the Growth Mindset Challenge!  
-A **growth mindset** means believing that intelligence and skills improve with effort and learning. Let's practice it together! 💡
-""")
+st.title("🚀 Interactive Learning Hub: Code & Create")
 
-# 📝 Self-Assessment Quiz
-st.header("📝 Quick Mindset Quiz")
-questions = [
-    "Do you see challenges as opportunities to grow?",
-    "Do you believe hard work improves intelligence?",
-    "Are you open to learning from mistakes?",
-    "Do you appreciate constructive feedback?"
-]
+# Sidebar
+with st.sidebar:
+    st.image("https://img.icons8.com/color/96/000000/programming.png")
+    st.header("📚 Learning Center")
+    name = st.text_input("Your Name")
+    goal = st.text_input("Learning Goal")
+    learning_path = st.selectbox("🛣️ Choose Your Path", ["Web Development", "Data Science", "AI/ML", "Blockchain"])
+    experience_level = st.select_slider("⭐ Experience Level", ["Beginner", "Intermediate", "Advanced"])
+    preferred_language = st.multiselect("💻 Preferred Languages", ["Python", "JavaScript", "Java", "C++"])
+    study_time = st.slider("Daily Study Hours", 0, 12, 2)
+    st_lottie(lottie_coding, height=150)
 
-responses = []
-for q in questions:
-    responses.append(st.radio(q, ["Yes", "No"], index=None))  # No pre-selected answers
+if name:
+    if name not in st.session_state.users:
+        st.session_state.users[name] = {
+            "Skill Level": 1,
+            "XP Points": 0,
+            "Study Hours": study_time,
+            "Languages": preferred_language
+        }
+        st_lottie(lottie_hello, height=150)
 
-if st.button("Submit Quiz"):
-    if None in responses:
-        st.warning("Please answer all questions before submitting.")
-    else:
-        score = responses.count("Yes")
-        if score >= 3:
-            st.success("Great! You already have a strong growth mindset. Keep going! 🚀")
+    st.subheader(f"Welcome, {name} 🎉")
+    st.write(f"**Path:** {learning_path} | **Level:** {experience_level}")
+    st.write(f"**Goal:** {goal} | **Daily Study:** {study_time} hours")
+
+    # File Upload Feature
+    st.subheader("📁 File Upload Center")
+    uploaded_file = st.file_uploader("Upload your project files", type=['py', 'txt', 'jpg', 'png'])
+    if uploaded_file:
+        if uploaded_file.type.startswith('image'):
+            st.image(Image.open(uploaded_file), caption='Uploaded Image', use_column_width=True)
         else:
-            st.warning("You can improve! Start by embracing challenges and learning from mistakes. 💡")
+            st.write("File Contents:")
+            st.code(uploaded_file.getvalue().decode("utf-8"), language="python")
 
-# 🎯 Goal Setting
-st.header("🎯 Set Your Learning Goal")
-goal = st.text_input("What is one skill or subject you want to improve?")
-if goal:
-    st.write(f"Awesome! Stay committed to learning **{goal}** and track your progress daily.")
+    # Learning Progress Graph
+    progress = np.random.randint(10, 100, size=30)
+    fig = px.line(y=progress, x=list(range(1, 31)), title="📈 Learning Progress")
+    st.plotly_chart(fig)
 
-# 📅 Track Your Daily Progress
-st.header("📅 Track Your Daily Progress")
-new_entry = st.text_area("What did you learn today?")
-if st.button("Add Progress"):
-    if new_entry:
-        st.session_state["progress"].append(new_entry)
-        st.success("Progress recorded!")
-    else:
-        st.warning("Please enter something before adding.")
+    # Pomodoro Timer
+    st.subheader("⏱️ Pomodoro Timer")
+    pomodoro_duration = st.slider("Work Duration (minutes)", 1, 60, 25)
+    if st.button("Start Timer"):
+        for sec in range(pomodoro_duration * 60, -1, -1):
+            mins, secs = divmod(sec, 60)
+            st.metric("Time Remaining", f"{mins:02d}:{secs:02d}")
+            time.sleep(1)
+        st.success("Time's up! Take a break! ☕")
 
-if st.session_state["progress"]:
-    st.subheader("Your Learning Journey 📖")
-    for entry in st.session_state["progress"]:
-        st.write(f"✅ {entry}")
+    # Coding Challenge
+    st.subheader("🎯 Today's Coding Challenge")
+    challenges = ["Build a To-Do App", "Create an API", "Design a Database", "Build a Chatbot"]
+    if st.button("Get New Challenge 🎲"):
+        st.info(f"Challenge: {random.choice(challenges)}")
+        st.session_state.users[name]["XP Points"] += 10
 
-# 🏆 Growth Mindset Leaderboard
-st.header("🏆 Growth Mindset Leaderboard")
+    # Code Editor
+    st.subheader("💻 Code Playground")
+    language = st.selectbox("Select Language", ["python", "javascript"])
+    code = st.text_area("Write your code here:", height=200)
+    if st.button("Run Code ▶️"):
+        st.code(code, language=language)
+        st.success("Code executed successfully!")
 
-user_name = st.text_input("Enter your name to join the leaderboard:")
-if user_name:
-    if user_name not in st.session_state["leaderboard"]:
-        st.session_state["leaderboard"][user_name] = st.session_state["streak"]
+    # Learning Resources
+    st.subheader("📚 Learning Resources")
+    tabs = st.tabs(["Tutorials", "Docs", "Projects"])
+    with tabs[0]:
+        st.write("Interactive video tutorials")
+        st.video("https://youtu.be/example")
+    with tabs[1]:
+        st.write("Comprehensive documentation")
+        st.markdown("[View Documentation](https://docs.example.com)")
+    with tabs[2]:
+        st.write("Hands-on project templates")
+        if st.button("Start a Project"):
+            st.success("Project initialized!")
 
-if st.button("Complete Today's Challenge ✅"):
-    if user_name:
-        st.session_state["streak"] += 1
-        st.session_state["leaderboard"][user_name] = st.session_state["streak"]
-        st.success(f"Awesome! Your streak is now {st.session_state['streak']} days! 🚀")
-    else:
-        st.warning("Please enter your name to track progress.")
-
-# Sort Leaderboard by Streak Count
-sorted_leaderboard = dict(sorted(st.session_state["leaderboard"].items(), key=lambda x: x[1], reverse=True))
-
-# Display Leaderboard Table
-if sorted_leaderboard:
-    st.subheader("🔥 Top Learners")
-    leaderboard_df = pd.DataFrame(sorted_leaderboard.items(), columns=["Participant", "Streak Days"])
-    st.table(leaderboard_df)
-else:
-    st.info("Leaderboard is empty. Join the challenge by entering your name above!")
-
-# 💬 Encouragement Messages
-st.header("💬 Share Encouragement")
-message = st.text_area("Motivate others by writing a positive message:")
-if st.button("Post Message"):
-    if message:
-        st.session_state["messages"].append(message)
-        st.success("Thank you for spreading positivity! 🌟")
-    else:
-        st.warning("Please write a message before posting.")
-
-if st.session_state["messages"]:
-    st.subheader("🌟 Community Motivation")
-    for msg in st.session_state["messages"]:
-        st.write(f"💬 {msg}")
-
-# End Message
-st.write("**Keep learning and growing! 🌱**")
+    # Leaderboard
+    st.subheader("🏅 Global Leaderboard")
+    df = pd.DataFrame.from_dict(st.session_state.users, orient="index")
+    df["Total Score"] = df["Skill Level"] * 100 + df["XP Points"]
+    df = df.sort_values(by=["Total Score"], ascending=False)
+    st.table(df[["Skill Level", "XP Points", "Total Score"]])
